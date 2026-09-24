@@ -23,8 +23,8 @@ jobs:
             if echo "$HEALTH" | grep -q '"success":true' && echo "$HEALTH" | grep -q '"architecture":"render-direct-h5"'; then
               SEARCH="$(curl -fsS --max-time 30 "$BASE/search?q=Avatar" || true)"
               echo "SEARCH: $SEARCH"
-              if echo "$SEARCH" | grep -q '"query":"Avatar"' && ! echo "$SEARCH" | grep -q '"error":"SEARCH_UPSTREAM_FAILED"'; then
-                echo "Render gateway verification passed."
+              if echo "$SEARCH" | grep -q '"query":"Avatar"' && echo "$SEARCH" | grep -Eq '"count":[1-9][0-9]*' && ! echo "$SEARCH" | grep -q '"error":"SEARCH_UPSTREAM_FAILED"'; then
+                echo "Render gateway verification passed with non-empty search results."
                 exit 0
               fi
             fi
