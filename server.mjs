@@ -187,17 +187,56 @@ async function handleSearchSuggest(params) {
   return { body: { query: q, suggestions: items.map(i => i.word).filter(Boolean) } };
 }
 
+function extractSearchItems(body) {
+  const data = body?.data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.subjects)) return data.subjects;
+  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(body?.items)) return body.items;
+  if (Array.isArray(body?.results)) return body.results;
+  return [];
+}
+
 async function handleSearch(params) {
   const q = text(params.get("q"));
   if (!q) return { status: 400, body: { error: "q parameter required" } };
-  const body = await upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30, perPage: 30 })
-  });
-  const items = body?.data?.items || [];
-  const movies = items.map(normalizeItem);
-  return { body: { query: q, count: movies.length, movies } };
+
+  const attempts = [
+    async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/everyone-search?keyword=${encodeURIComponent(q)}&page=1&perPage=30`, {
+      method: "GET",
+      headers: { Referer: "https://moviebox.ph/" }
+    }),
+    async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Referer: "https://moviebox.ph/" },
+      body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30, perPage: 30 })
+    })
+  ];
+
+  const failures = [];
+  for (const attempt of attempts) {
+    try {
+      const body = await attempt();
+      const items = extractSearchItems(body);
+      if (items.length || body?.code === 0 || body?.success === true) {
+        const movies = items.map(normalizeItem);
+        return { body: { query: q, count: movies.length, movies, source: "H5" } };
+      }
+      failures.push({ status: 200, reason: "empty_search_payload" });
+    } catch (error) {
+      failures.push({ status: error?.status || 500, reason: error?.message || "upstream_error" });
+    }
+  }
+
+  return {
+    status: failures[failures.length - 1]?.status || 502,
+    body: {
+      success: false,
+      error: "SEARCH_UPSTREAM_FAILED",
+      query: q,
+      attempts: failures
+    }
+  };
 }
 
 async function handleDetail(slug) {
