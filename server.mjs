@@ -218,7 +218,7 @@ async function handleSearch(params) {
     try {
       const body = await attempt();
       const items = extractSearchItems(body);
-      if (items.length || body?.code === 0 || body?.success === true) {
+      if (items.length) {
         const movies = items.map(normalizeItem);
         return { body: { query: q, count: movies.length, movies, source: "H5" } };
       }
