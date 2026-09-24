@@ -194,7 +194,7 @@ async function handleSearch(params) {
   const body = await upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ keyword: q, perPage: 30, page: 1 })
+    body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30, perPage: 30 })
   });
   const items = body?.data?.items || [];
   const movies = items.map(normalizeItem);
