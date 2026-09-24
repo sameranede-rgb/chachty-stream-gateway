@@ -189,7 +189,7 @@ async function handleDetail(slug) {
   const response = await fetchTimeout(pageUrl, { headers: { "User-Agent": UA }, redirect: "follow" });
   if (!response.ok) return { status: 404, body: { error: "Movie not found" } };
   const html = await response.text();
-  const match = html.match(/<script[^>]+id="__NUXT_DATA__"[^>]*>([\\s\\S]*?)<\\/script>/);
+  const match = html.match(/<script[^>]+id="__NUXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (!match) return { status: 502, body: { error: "Could not find NUXT data" } };
 
   let nuxt;
