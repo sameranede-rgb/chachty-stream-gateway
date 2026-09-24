@@ -1,0 +1,27 @@
+name: Debug H5 Search
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe H5 search endpoints
+        shell: bash
+        run: |
+          set -u
+          H5="https://h5-api.aoneroom.com"
+          TS="$(date +%s%3N)"
+          REV="$(echo -n "$TS" | rev)"
+          MD5="$(printf "%s" "$REV" | md5sum | cut -d' ' -f1)"
+          echo "TIMESTAMP=$TS"
+          echo "H5_TOKEN=$MD5"
+
+          echo "=== everyone-search ==="
+          curl -sS -D - --max-time 30             -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"             -H "Accept: application/json"             -H "Content-Type: application/json"             -H "X-Request-Lang: en"             -H "X-M-Version: 16.2.1"             -H "X-Client-Token: $TS,$MD5"             -H "X-Client-Type: h5"             -H 'X-Client-Info: {"timezone":"Africa/Algiers","language":"en-US","platform":"web"}'             -H "Referer: https://moviebox.ph/"             "$H5/wefeed-h5api-bff/subject/everyone-search?keyword=Avatar&page=1&perPage=30" || true
+
+          echo
+          echo "=== legacy search ==="
+          curl -sS -D - --max-time 30             -X POST             -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"             -H "Accept: application/json"             -H "Content-Type: application/json"             -H "X-Request-Lang: en"             -H "X-M-Version: 16.2.1"             -H "X-Client-Token: $TS,$MD5"             -H "X-Client-Type: h5"             -H 'X-Client-Info: {"timezone":"Africa/Algiers","language":"en-US","platform":"web"}'             -H "Referer: https://moviebox.ph/"             --data '{"keyword":"Avatar","type":0,"page":1,"pageSize":30,"perPage":30}'             "$H5/wefeed-h5api-bff/subject/search" || true
