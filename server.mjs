@@ -469,6 +469,26 @@ const server = http.createServer(
       }
 
       if (
+        url.pathname === "/debug/h5" &&
+        req.method === "GET"
+      ) {
+        const h5 = "https://h5-api.aoneroom.com/wefeed-h5api-bff/home?host=moviebox.ph";
+        const upstream = await fetchTimeout(h5, {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Mozilla/5.0"
+          }
+        }, 20000);
+        const body = await upstream.text();
+        return sendJson(res, {
+          ok: upstream.ok,
+          status: upstream.status,
+          contentType: upstream.headers.get("content-type"),
+          bodyPreview: body.slice(0, 500)
+        }, upstream.ok ? 200 : 502);
+      }
+
+      if (
         url.pathname === "/resolve" &&
         req.method === "POST"
       ) {
