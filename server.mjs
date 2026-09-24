@@ -279,7 +279,7 @@ async function discoverDomain() {
       headers: { "X-Client-Type": "h5" }
     });
     const value = typeof body?.data === "string" ? body.data : "";
-    if (value) return value.replace(/\\/+$/, "");
+    if (value) return value.replace(/\/+$/, "");
   } catch {}
   return DEFAULT_DOMAIN;
 }
@@ -435,7 +435,7 @@ async function route(req, res) {
   }
 
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const p = url.pathname.replace(/\\/+$/, "") || "/";
+  const p = url.pathname.replace(/\/+$/, "") || "/";
 
   if (p === "/health" && req.method === "GET") {
     return sendJson(res, {
