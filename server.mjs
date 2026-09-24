@@ -30,8 +30,8 @@ async function primeH5Authorization() {
     return cachedH5Authorization;
   }
   try {
-    const response = await fetchTimeout(H5_API + "/wefeed-h5api-bff/home?host=moviebox.pk", {
-      headers: h5Headers({ Referer: "https://moviebox.pk/" })
+    const response = await fetchTimeout(H5_API + "/wefeed-h5api-bff/home?host=moviebox.ph", {
+      headers: h5Headers({ Referer: "https://moviebox.ph/" })
     }, 20000);
     rememberH5User(response);
   } catch {}
