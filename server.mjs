@@ -455,7 +455,7 @@ async function route(req, res) {
     return sendJson(res, { ok: response.ok, status: response.status, contentType: response.headers.get("content-type"), bodyPreview: body.slice(0, 500) }, response.ok ? 200 : 502);
   }
 
-  if (p === "/home" && req.method === "GET") return sendJson(res, { source: `${H5_API}/wefeed-h5api-bff/home`, total_sections: (await fetchHomeData()).length, sections: await fetchHomeData() });
+  if (p === "/home" && req.method === "GET") { const sections = await fetchHomeData(); return sendJson(res, { source: `${H5_API}/wefeed-h5api-bff/home`, total_sections: sections.length, sections }); }
   if (p === "/home/sections" && req.method === "GET") {
     const sections = await fetchHomeData();
     return sendJson(res, { total: sections.length, sections: sections.map(s => ({ name: s.section, count: s.count, more_url: s.more_url })) });
