@@ -234,14 +234,20 @@ async function handleSearch(params) {
   await primeH5Authorization();
 
   const attempts = [
-    async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/everyone-search?keyword=${encodeURIComponent(q)}&page=1&perPage=30`, {
-      method: "GET",
-      headers: { Referer: "https://moviebox.pk/" }
-    }),
     async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Referer: "https://moviebox.pk/" },
       body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30, perPage: 30 })
+    }),
+    async () => upstreamJson(`${H5_API}/wefeed-mobile-bff/subject-api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Referer: "https://moviebox.pk/" },
+      body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30 })
+    }),
+    async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Referer: "https://moviebox.pk/" },
+      body: JSON.stringify({ keyword: q, perPage: 30, page: 1 })
     })
   ];
 
@@ -256,7 +262,7 @@ async function handleSearch(params) {
       }
       failures.push({ status: 200, reason: "empty_search_payload" });
     } catch (error) {
-      failures.push({ status: error?.status || 500, reason: error?.message || "upstream_error" });
+      failures.push({ status: error?.status || 500, reason: error?.message || "upstream_error", upstream: error?.body || null });
     }
   }
 
