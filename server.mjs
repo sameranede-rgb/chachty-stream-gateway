@@ -61,8 +61,7 @@ async function upstreamJson(url, options = {}) {
   const response = await fetchTimeout(url, {
     ...options,
     headers: {
-      "User-Agent": UA,
-      Accept: "application/json",
+      ...h5Headers(),
       ...(options.headers || {})
     }
   });
