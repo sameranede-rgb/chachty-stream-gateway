@@ -230,7 +230,8 @@ function extractSearchItems(body) {
 
 async function handleSearch(params) {
   const q = text(params.get("q"));
-  if (!q) return { status: 400, body: { error: "q parameter required" } };\n  await primeH5Authorization();
+  if (!q) return { status: 400, body: { error: "q parameter required" } };
+  await primeH5Authorization();
 
   const attempts = [
     async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/everyone-search?keyword=${encodeURIComponent(q)}&page=1&perPage=30`, {
@@ -239,7 +240,7 @@ async function handleSearch(params) {
     }),
     async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Referer: "https://moviebox.ph/" },
+      headers: { "Content-Type": "application/json", Referer: "https://moviebox.pk/" },
       body: JSON.stringify({ keyword: q, type: 0, page: 1, pageSize: 30, perPage: 30 })
     })
   ];
