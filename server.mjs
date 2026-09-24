@@ -334,7 +334,7 @@ async function fetchSubtitles(subjectId, detailPath, streamId) {
 async function resolveDirectStreams(req, payload) {
   const subjectId = text(payload?.subjectId);
   const detailPath = text(payload?.detailPath);
-  if (!/^\\d+$/.test(subjectId) || !detailPath) return { success: false, error: "INVALID_SUBJECT_ID_OR_DETAIL_PATH" };
+  if (!/^\d+$/.test(subjectId) || !detailPath) return { success: false, error: "INVALID_SUBJECT_ID_OR_DETAIL_PATH" };
 
   const se = Math.max(0, Number(payload?.season || 0));
   const ep = Math.max(0, Number(payload?.episode || 0));
@@ -373,7 +373,7 @@ async function resolveDirectStreams(req, payload) {
 async function streamDirect(req, res, payload) {
   const subjectId = text(payload.subjectId);
   const detailPath = text(payload.detailPath);
-  if (!/^\\d+$/.test(subjectId) || !detailPath) return sendJson(res, { success: false, error: "INVALID_STREAM_TOKEN" }, 400);
+  if (!/^\d+$/.test(subjectId) || !detailPath) return sendJson(res, { success: false, error: "INVALID_STREAM_TOKEN" }, 400);
 
   const se = Number(payload.season || 0);
   const ep = Number(payload.episode || 0);
@@ -472,7 +472,7 @@ async function route(req, res) {
     return match ? sendJson(res, match) : sendJson(res, { error: "Section not found" }, 404);
   }
 
-  let m = p.match(/^\\/home\\/section\\/(.+)$/);
+  let m = p.match(/^\/home\/section\/(.+)$/);
   if (m && req.method === "GET") {
     const name = decodeURIComponent(m[1]); const sections = await fetchHomeData();
     const matched = sections.filter(s => s.section.toLowerCase().includes(name.toLowerCase()));
@@ -485,14 +485,14 @@ async function route(req, res) {
     return sendJson(res, { source: `${H5_API}/wefeed-h5api-bff/subject/filter`, total_sections: sections.length, sections });
   }
 
-  m = p.match(/^\\/(movies|tv-series|animation)\\/sections$/);
+  m = p.match(/^\/(movies|tv-series|animation)\/sections$/);
   if (m && req.method === "GET") {
     const category = m[1] === "movies" ? "movie" : m[1] === "tv-series" ? "tv-series" : "animated-series";
     const sections = await fetchCategoryData(category);
     return sendJson(res, { total: sections.length, sections: sections.map(s => ({ name: s.section, count: s.count, more_url: s.more_url })) });
   }
 
-  m = p.match(/^\\/(movies|tv-series|animation)\\/section\\/(.+)$/);
+  m = p.match(/^\/(movies|tv-series|animation)\/section\/(.+)$/);
   if (m && req.method === "GET") {
     const category = m[1] === "movies" ? "movie" : m[1] === "tv-series" ? "tv-series" : "animated-series";
     const name = decodeURIComponent(m[2]); const sections = await fetchCategoryData(category);
@@ -512,17 +512,17 @@ async function route(req, res) {
     const result = await handleSearch(url.searchParams); return sendJson(res, result.body, result.status || 200);
   }
 
-  m = p.match(/^\\/detail\\/(.+)$/);
+  m = p.match(/^\/detail\/(.+)$/);
   if (m && req.method === "GET") {
     const result = await handleDetail(decodeURIComponent(m[1])); return sendJson(res, result.body, result.status || 200);
   }
 
-  m = p.match(/^\\/episodes\\/(.+)$/);
+  m = p.match(/^\/episodes\/(.+)$/);
   if (m && req.method === "GET") {
     const result = await handleEpisodes(decodeURIComponent(m[1])); return sendJson(res, result.body, result.status || 200);
   }
 
-  m = p.match(/^\\/api\\/stream\\/(\\d+)$/);
+  m = p.match(/^\/api\/stream\/(\d+)$/);
   if (m && req.method === "GET") {
     const result = await resolveDirectStreams(req, {
       subjectId: m[1],
@@ -534,7 +534,7 @@ async function route(req, res) {
     return sendJson(res, result, result.success ? 200 : 404);
   }
 
-  m = p.match(/^\\/watch\\/(\\d+)$/);
+  m = p.match(/^\/watch\/(\d+)$/);
   if (m && ["GET", "HEAD"].includes(req.method)) {
     return streamDirect(req, res, {
       subjectId: m[1],
