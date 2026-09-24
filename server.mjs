@@ -40,6 +40,23 @@ async function fetchTimeout(url, options = {}, timeout = 30000) {
   }
 }
 
+function h5Headers(extra = {}) {
+  const ts = String(Date.now());
+  const token = crypto.createHash("md5").update(ts.split("").reverse().join("")).digest("hex");
+  return {
+    "User-Agent": UA,
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "X-Request-Lang": "en",
+    "X-M-Version": "16.2.1",
+    "X-Client-Token": ts + "," + token,
+    "X-Client-Type": "h5",
+    "X-Client-Info": JSON.stringify({ timezone: "Africa/Algiers", language: "en-US", platform: "web" }),
+    "Referer": "https://moviebox.ph/",
+    ...extra
+  };
+}
+
 async function upstreamJson(url, options = {}) {
   const response = await fetchTimeout(url, {
     ...options,
