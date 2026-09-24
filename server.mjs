@@ -88,22 +88,36 @@ function h5Headers(extra = {}) {
 }
 
 async function upstreamJson(url, options = {}) {
-  const response = await fetchTimeout(url, {
-    ...options,
-    headers: {
-      ...h5Headers(),
-      ...(options.headers || {})
+  let retriedAuth = false;
+  while (true) {
+    const response = await fetchTimeout(url, {
+      ...options,
+      headers: {
+        ...h5Headers(),
+        ...(options.headers || {})
+      }
+    });
+    rememberH5User(response);
+    const body = await response.json().catch(() => ({}));
+    if (response.ok) return body;
+
+    const invalidToken =
+      response.status === 400 &&
+      String(body?.reason || body?.message || body?.data?.reason || body?.data?.message || "").toLowerCase().includes("invalid token");
+
+    if (invalidToken && !retriedAuth) {
+      cachedH5Authorization = "";
+      cachedH5AuthorizationAt = 0;
+      await primeH5Authorization();
+      retriedAuth = true;
+      continue;
     }
-  });
-  rememberH5User(response);
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
+
     const err = new Error(`Upstream returned ${response.status}`);
     err.status = response.status;
     err.body = body;
     throw err;
   }
-  return body;
 }
 
 function createToken(payload) {
