@@ -9,6 +9,35 @@ const DEFAULT_DOMAIN = "https://123movienow.cc";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36";
 const TOKEN_TTL = Math.max(60, Number(process.env.STREAM_TOKEN_TTL_SECONDS || 300));
 
+let cachedH5Authorization = "";
+let cachedH5AuthorizationAt = 0;
+
+function rememberH5User(response) {
+  const raw = text(response.headers.get("x-user"));
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    const token = text(parsed?.token);
+    if (token) {
+      cachedH5Authorization = token.startsWith("Bearer ") ? token : "Bearer " + token;
+      cachedH5AuthorizationAt = Date.now();
+    }
+  } catch {}
+}
+
+async function primeH5Authorization() {
+  if (cachedH5Authorization && Date.now() - cachedH5AuthorizationAt < 10 * 60 * 1000) {
+    return cachedH5Authorization;
+  }
+  try {
+    const response = await fetchTimeout(H5_API + "/wefeed-h5api-bff/home?host=moviebox.pk", {
+      headers: h5Headers({ Referer: "https://moviebox.pk/" })
+    }, 20000);
+    rememberH5User(response);
+  } catch {}
+  return cachedH5Authorization;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,HEAD,OPTIONS",
@@ -52,7 +81,8 @@ function h5Headers(extra = {}) {
     "X-Client-Token": ts + "," + token,
     "X-Client-Type": "h5",
     "X-Client-Info": JSON.stringify({ timezone: "Africa/Algiers", language: "en-US", platform: "web" }),
-    "Referer": "https://moviebox.ph/",
+    "Referer": "https://moviebox.pk/",
+    ...(cachedH5Authorization ? { Authorization: cachedH5Authorization } : {}),
     ...extra
   };
 }
@@ -65,6 +95,7 @@ async function upstreamJson(url, options = {}) {
       ...(options.headers || {})
     }
   });
+  rememberH5User(response);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const err = new Error(`Upstream returned ${response.status}`);
@@ -199,12 +230,12 @@ function extractSearchItems(body) {
 
 async function handleSearch(params) {
   const q = text(params.get("q"));
-  if (!q) return { status: 400, body: { error: "q parameter required" } };
+  if (!q) return { status: 400, body: { error: "q parameter required" } };\n  await primeH5Authorization();
 
   const attempts = [
     async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/everyone-search?keyword=${encodeURIComponent(q)}&page=1&perPage=30`, {
       method: "GET",
-      headers: { Referer: "https://moviebox.ph/" }
+      headers: { Referer: "https://moviebox.pk/" }
     }),
     async () => upstreamJson(`${H5_API}/wefeed-h5api-bff/subject/search`, {
       method: "POST",
